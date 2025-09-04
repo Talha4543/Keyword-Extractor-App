@@ -1,4 +1,5 @@
 # Keyword Extractor App 🔑
+[!image alt](https://github.com/Talha4543/Keyword-Extractor-App/blob/74528e7db949974b42ee6e5c57a1b3fab2950c63/result.PNG)
 
 Hey there! 👋 This is a super easy-to-use tool that helps you figure out the most important words (we call them 'keywords') in any piece of text. 
 
