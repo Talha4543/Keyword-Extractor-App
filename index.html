@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dark Keyword Extractor — Modern UI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0f13;
+    --panel:#0f1720;
+    --muted:#98a0ab;
+    --accent:#7c5cff;
+    --accent-2:#22d3ee;
+    --glass: rgba(255,255,255,0.03);
+    --success:#2dd4bf;
+    --danger:#ff6b6b;
+    --shadow: 0 6px 30px rgba(2,6,23,0.7);
+    --card-radius:14px;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(800px 300px at 10% 10%, rgba(124,92,255,0.08), transparent 6%),
+      radial-gradient(600px 200px at 90% 80%, rgba(34,211,238,0.03), transparent 6%),
+      linear-gradient(180deg,var(--bg), #04060a 120%);
+    color:#e6eef6;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    padding:28px;
+  }
+
+  .app {
+    max-width:1200px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns: 1fr 420px;
+    gap:22px;
+    align-items:start;
+  }
+
+  header{
+    grid-column: 1 / -1;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    margin-bottom:6px;
+  }
+  .logo {
+    width:56px;height:56px;border-radius:12px;
+    background: linear-gradient(135deg,var(--accent),var(--accent-2));
+    display:flex;align-items:center;justify-content:center;
+    box-shadow: 0 8px 30px rgba(124,92,255,0.12), inset 0 -6px 18px rgba(255,255,255,0.04);
+    font-weight:800;color:white;font-size:20px;
+  }
+  h1{margin:0;font-weight:700;font-size:20px}
+  p.lead{margin:0;color:var(--muted);font-size:13px}
+
+  /* Left panel (main) */
+  .panel {
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:var(--card-radius);
+    padding:18px;
+    box-shadow:var(--shadow);
+    border: 1px solid rgba(255,255,255,0.03);
+  }
+
+  .input-area{
+    display:flex;flex-direction:column;gap:12px;
+  }
+  textarea#source{
+    width:100%;min-height:240px;
+    resize:vertical;
+    background:var(--glass);
+    border:1px solid rgba(255,255,255,0.03);
+    color: #eaf2ff;
+    padding:14px;border-radius:10px;
+    font-size:14px;line-height:1.6;
+    outline:none;
+  }
+
+  .controls{
+    display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+  }
+  .btn{
+    border:0;padding:10px 14px;border-radius:10px;cursor:pointer;
+    background:transparent;color:var(--muted);font-weight:600;
+    border:1px solid rgba(255,255,255,0.03);
+  }
+  .btn.primary{
+    background:linear-gradient(90deg,var(--accent),#A87DFF);
+    color:white;border:0;box-shadow:0 8px 20px rgba(124,92,255,0.14);
+  }
+  .file-input{
+    display:flex;align-items:center;gap:8px;
+  }
+  input[type="file"]{display:none}
+
+  /* Right panel (results) */
+  .sidebar {
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .option-row{
+    display:flex;gap:10px;align-items:center;justify-content:space-between;
+  }
+  label.small{font-size:13px;color:var(--muted)}
+  .select, .toggle, .slider, .num{
+    background:transparent;border:1px solid rgba(255,255,255,0.03);
+    color:var(--muted);padding:8px;border-radius:8px;
+  }
+  .toggle {cursor:pointer;padding:8px 10px}
+  .toggle.on{background:linear-gradient(90deg,#1f2937, rgba(255,255,255,0.02)); color:var(--accent-2); border:1px solid rgba(34,211,238,0.12)}
+  .slider{width:100%}
+
+  .results {
+    display:flex;flex-direction:column;gap:12px;
+    padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.012), transparent);
+    border:1px solid rgba(255,255,255,0.03);
+  }
+  .result-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .keyword-list{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow:auto;padding-right:6px}
+  .kw {
+    display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+    border:1px solid rgba(255,255,255,0.02);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .kw:hover{transform:translateY(-4px); box-shadow:0 8px 30px rgba(0,0,0,0.6)}
+  .kw .left{display:flex;gap:12px;align-items:center}
+  .pill{
+    background:rgba(255,255,255,0.03);color:var(--accent);padding:6px 10px;border-radius:999px;font-weight:700;font-size:13px;border:1px solid rgba(124,92,255,0.08)
+  }
+  .score{font-weight:700;color:var(--muted);font-size:13px}
+
+  .tag-cloud{
+    display:flex;flex-wrap:wrap;gap:10px;padding:6px 0;
+  }
+  .tag{
+    padding:6px 10px;border-radius:999px;background:linear-gradient(90deg, rgba(124,92,255,0.06), rgba(34,211,238,0.03));
+    cursor:pointer; color:#dcecff;font-weight:600;font-size:13px;transition:transform .12s;
+  }
+  .tag:hover{transform:scale(1.06)}
+
+  .highlighted-text{
+    margin-top:12px;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+    max-height:260px;overflow:auto;border:1px dashed rgba(255,255,255,0.02);
+  }
+  mark.kwmark{
+    background: linear-gradient(90deg, rgba(124,92,255,0.18), rgba(34,211,238,0.08));
+    color: #fff; padding:2px 4px;border-radius:6px;
+  }
+
+  .meta-actions{
+    display:flex;gap:8px;align-items:center;
+  }
+  .small{font-size:12px;color:var(--muted)}
+
+  /* responsive */
+  @media (max-width: 980px){
+    .app{grid-template-columns:1fr; padding:12px}
+    .sidebar{order:2}
+  }
+
+  /* subtle footer */
+  footer{grid-column:1/-1;margin-top:14px;color:var(--muted);font-size:12px;text-align:center}
+  /* tiny helper */
+  .hint{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo">KW</div>
+      <div>
+        <h1>Keyword Extractor</h1>
+        <p class="lead">Instant keyword extraction, n-grams, tagging & export — dark UI for modern apps.</p>
+      </div>
+    </header>
+
+    <!-- Left: Text input + actions -->
+    <section class="panel">
+      <div class="input-area">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div>
+            <div class="hint">Paste text, type, or upload a .txt file</div>
+            <div style="height:6px"></div>
+            <strong class="small">Source Text</strong>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div class="file-input">
+              <label class="btn" title="Upload .txt"><input id="fileInput" type="file" accept=".txt">Upload</label>
+              <button id="clearBtn" class="btn" title="Clear text">Clear</button>
+            </div>
+            <button id="extractBtn" class="btn primary">Extract Keywords</button>
+          </div>
+        </div>
+        <textarea id="source" placeholder="Paste or type your content here..."></textarea>
+
+        <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+          <div class="hint small">Tip: longer documents produce richer candidate phrases.</div>
+          <div style="display:flex;gap:8px;">
+            <button id="copyAll" class="btn" title="Copy extracted keywords">Copy</button>
+            <button id="exportJSON" class="btn" title="Export JSON">JSON</button>
+            <button id="exportCSV" class="btn" title="Export CSV">CSV</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Options + results -->
+    <aside class="sidebar">
+      <div class="panel">
+        <div class="option-row"><label class="small">N-gram</label>
+          <select id="ngram" class="select">
+            <option value="1">Unigrams (1)</option>
+            <option value="2">Bigrams (2)</option>
+            <option value="3">Up to 3-grams</option>
+          </select>
+        </div>
+
+        <div class="option-row" style="margin-top:10px">
+          <label class="small">Min word length</label>
+          <input id="minWord" class="num" type="number" min="1" value="3" style="width:84px">
+        </div>
+
+        <div class="option-row" style="margin-top:10px">
+          <label class="small">Remove stopwords</label>
+          <div id="stopToggle" class="toggle on">On</div>
+        </div>
+
+        <div style="margin-top:12px">
+          <label class="small">Sensitivity (score threshold)</label>
+          <input id="sensitivity" class="slider" type="range" min="0" max="100" value="20">
+          <div class="hint small" id="sVal">Min score percent: 20%</div>
+        </div>
+      </div>
+
+      <div class="panel results" style="margin-top:6px">
+        <div class="result-header">
+          <div>
+            <strong>Keywords</strong>
+            <div class="hint small">Click a tag to highlight occurrences</div>
+          </div>
+          <div class="meta-actions">
+            <div class="small" id="kwCount">0</div>
+          </div>
+        </div>
+
+        <div class="tag-cloud" id="tagCloud" aria-live="polite"></div>
+
+        <div class="keyword-list" id="keywordList" aria-live="polite"></div>
+
+        <div class="highlighted-text" id="highlighted" aria-live="polite">No text highlighted. Extract to see results here.</div>
+      </div>
+
+    </aside>
+
+    <footer>
+      Built with ❤️ · TF-based extraction · Try switching n-grams & sensitivity for different results. 🔨🤖🔧
+    </footer>
+  </div>
+
+<script>
+/*
+  Keyword Extractor
+  - TF-based scoring with n-gram support
+  - Stopword removal (internal list)
+  - Highlights occurrences, exports CSV/JSON, copy to clipboard
+*/
+
+/* ========== Utility & Stopwords ========== */
+const STOPWORDS = new Set([
+  'a','able','about','above','across','after','again','against','all','almost','also','am','among','an','and','any','are','as','at','be','because','been','but','by','can','cannot','could','dear','did','do','does','either','else','ever','every','for','from','get','got','had','has','have','he','her','hers','him','his','how','however','i','if','in','into','is','it','its','just','least','let','like','likely','may','me','might','most','must','my','neither','no','nor','not','of','off','often','on','only','or','other','our','own','rather','said','say','says','she','should','since','so','some','than','that','the','their','them','then','there','these','they','this','tis','to','too','twas','us','wants','was','we','were','what','when','where','which','while','who','whom','why','will','with','would','yet','you','your'
+]);
+
+function normalizeText(s){
+  return s.normalize('NFKC').replace(/\u2019/g, "'"); // normalize apostrophes
+}
+
+/* tokenize preserving words, simple punctuation removal (keeps apostrophes inside words) */
+function tokenize(text){
+  // split on non-word except apostrophe
+  const tokens = text
+    .toLowerCase()
+    .replace(/[\u2012\u2013\u2014\u2015]/g, ' ') // dashes
+    .replace(/[“”«»„”]/g, '"')
+    .replace(/[()\[\]{}:;,.!?\/\\|<>]+/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  return tokens;
+}
+
+/* generate ngrams up to n based on tokens array */
+function generateNgrams(tokens, maxN=1, minWordLen=1, removeStopwords=true){
+  const ngrams = [];
+  for(let i=0;i<tokens.length;i++){
+    for(let n=1;n<=maxN && i+n<=tokens.length;n++){
+      const slice = tokens.slice(i,i+n);
+      // skip if any word shorter than min or empty
+      if(slice.some(w => w.length < minWordLen)) continue;
+      if(removeStopwords && slice.every(w => STOPWORDS.has(w))) continue; // skip all-stopword phrases
+      // join on space
+      const phrase = slice.join(' ');
+      ngrams.push({phrase, pos:i});
+    }
+  }
+  return ngrams;
+}
+
+/* compute term frequencies and basic score */
+function scoreCandidates(ngrams){
+  const freq = new Map();
+  const positions = new Map();
+  for(const {phrase, pos} of ngrams){
+    freq.set(phrase, (freq.get(phrase)||0) + 1);
+    if(!positions.has(phrase)) positions.set(phrase, []);
+    positions.get(phrase).push(pos);
+  }
+  const items = [];
+  for(const [phrase, count] of freq.entries()){
+    // base score: frequency
+    let score = count;
+    // slightly boost longer phrases to prefer multi-word keywords
+    const lenBoost = phrase.split(' ').length;
+    score = score * (1 + (lenBoost - 1) * 0.45);
+    items.push({phrase, score, count, positions: positions.get(phrase)});
+  }
+  // normalize scores to 0..1
+  const max = Math.max(...items.map(i=>i.score), 1);
+  for(const it of items){
+    it.norm = +(it.score / max).toFixed(4);
+  }
+  // sort descending by normalized score, then by count, then length
+  items.sort((a,b)=> b.norm - a.norm || b.count - a.count || b.phrase.length - a.phrase.length);
+  return items;
+}
+
+/* remove substrings: if "machine learning" exists, remove "machine" if both present? We'll keep both but prioritize longer phrase when selecting for tag cloud */
+function dedupeCandidates(items){
+  // keep items but give preference when showing: longer phrases first
+  return items;
+}
+
+/* highlight occurrences of a phrase inside HTML-escaped text - we'll wrap with mark tags later */
+function escapeHtml(str){
+  return str.replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+
+/* ========== DOM Elements ========== */
+const sourceEl = document.getElementById('source');
+const extractBtn = document.getElementById('extractBtn');
+const fileInput = document.getElementById('fileInput');
+const clearBtn = document.getElementById('clearBtn');
+const tagCloud = document.getElementById('tagCloud');
+const keywordList = document.getElementById('keywordList');
+const highlighted = document.getElementById('highlighted');
+const ngSel = document.getElementById('ngram');
+const minWordEl = document.getElementById('minWord');
+const stopToggle = document.getElementById('stopToggle');
+const sensitivity = document.getElementById('sensitivity');
+const sVal = document.getElementById('sVal');
+const kwCount = document.getElementById('kwCount');
+const copyAll = document.getElementById('copyAll');
+const exportJSON = document.getElementById('exportJSON');
+const exportCSV = document.getElementById('exportCSV');
+
+let lastResults = []; // array of {phrase, norm, count, positions}
+
+/* ========== Event Listeners ========== */
+sensitivity.addEventListener('input', () => {
+  sVal.textContent = `Min score percent: ${sensitivity.value}%`;
+});
+
+stopToggle.addEventListener('click', () => {
+  stopToggle.classList.toggle('on');
+  stopToggle.textContent = stopToggle.classList.contains('on') ? 'On' : 'Off';
+});
+
+extractBtn.addEventListener('click', () => {
+  const txt = normalizeText(sourceEl.value || '');
+  runExtraction(txt);
+});
+
+clearBtn.addEventListener('click', () => {
+  sourceEl.value = '';
+  lastResults = [];
+  renderEmptyResults();
+});
+
+fileInput.addEventListener('change', (e) => {
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  if(!f.type.match('text') && !f.name.endsWith('.txt')) {
+    alert('Please upload a plain .txt file.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    sourceEl.value = reader.result;
+  };
+  reader.readAsText(f);
+});
+
+copyAll.addEventListener('click', async () => {
+  if(!lastResults || lastResults.length===0){ alert('No keywords to copy.'); return; }
+  const txt = lastResults.map(r => `${r.phrase}\t${r.norm}`).join('\n');
+  try{
+    await navigator.clipboard.writeText(txt);
+    copyAll.textContent = 'Copied!';
+    setTimeout(()=> copyAll.textContent = 'Copy', 1200);
+  }catch(e){ alert('Clipboard failed.'); }
+});
+
+exportJSON.addEventListener('click', () => {
+  if(!lastResults || lastResults.length===0){ alert('No results to export.'); return; }
+  const blob = new Blob([JSON.stringify(lastResults, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'keywords.json'; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+exportCSV.addEventListener('click', () => {
+  if(!lastResults || lastResults.length===0){ alert('No results to export.'); return; }
+  const rows = [['phrase','score','count']];
+  for(const r of lastResults) rows.push([`"${r.phrase.replace(/"/g,'""')}"`, r.norm, r.count]);
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'keywords.csv'; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+/* when clicking outside tag cloud, clear highlights */
+document.addEventListener('click', (e)=>{
+  const t = e.target;
+  if(!t.closest || (!t.closest('.tag') && !t.closest('.kw'))) {
+    renderHighlightedText(sourceEl.value || '', []);
+  }
+}, true);
+
+/* ========== Core extraction flow ========== */
+function runExtraction(text){
+  const cleaned = text.trim();
+  if(!cleaned){
+    alert('Please paste or type some text first.');
+    return;
+  }
+  const maxN = Number(ngSel.value);
+  const minWordLen = Math.max(1, Number(minWordEl.value) || 1);
+  const removeStopwords = stopToggle.classList.contains('on');
+  const sens = Number(sensitivity.value) / 100;
+
+  const tokens = tokenize(cleaned);
+  // create ngrams
+  const ngrams = generateNgrams(tokens, maxN, minWordLen, removeStopwords);
+  if(ngrams.length === 0){
+    alert('No candidate phrases found with current settings. Try lowering min word length or n-gram.');
+    return;
+  }
+
+  let candidates = scoreCandidates(ngrams);
+  // optionally dedupe or further filter
+  candidates = dedupeCandidates(candidates);
+
+  // apply sensitivity threshold (norm >= sens)
+  const filtered = candidates.filter(c => c.norm >= sens);
+
+  lastResults = filtered.map(c => ({
+    phrase: c.phrase,
+    norm: Math.round(c.norm * 10000)/10000,
+    count: c.count,
+    positions: c.positions
+  }));
+
+  renderResults(lastResults, cleaned);
+}
+
+/* ========== Rendering ========== */
+function renderEmptyResults(){
+  tagCloud.innerHTML = '';
+  keywordList.innerHTML = '';
+  highlighted.innerHTML = 'No text highlighted. Extract to see results here.';
+  kwCount.textContent = '0';
+}
+
+function renderResults(items, sourceText){
+  // tag cloud (top 12)
+  tagCloud.innerHTML = '';
+  const top = items.slice(0, 12);
+  for(const it of top){
+    const el = document.createElement('div');
+    el.className = 'tag';
+    el.textContent = it.phrase;
+    // font-size scaled by norm
+    const size = 12 + Math.round(22 * it.norm);
+    el.style.fontSize = size + 'px';
+    el.addEventListener('click', ()=> onSelectPhrase(it.phrase));
+    tagCloud.appendChild(el);
+  }
+
+  // keyword list (all)
+  keywordList.innerHTML = '';
+  for(const it of items){
+    const row = document.createElement('div');
+    row.className = 'kw';
+    const left = document.createElement('div'); left.className='left';
+    const pill = document.createElement('div'); pill.className='pill'; pill.textContent = it.count;
+    const title = document.createElement('div'); title.innerHTML = `<strong>${escapeHtml(it.phrase)}</strong><div class="hint small" style="color:var(--muted)">${it.phrase.split(' ').length} words</div>`;
+    left.appendChild(pill); left.appendChild(title);
+
+    const right = document.createElement('div');
+    const score = document.createElement('div'); score.className='score'; score.textContent = (it.norm*100).toFixed(0) + '%';
+    right.appendChild(score);
+    row.appendChild(left); row.appendChild(right);
+    row.addEventListener('click', ()=> onSelectPhrase(it.phrase));
+    keywordList.appendChild(row);
+  }
+
+  kwCount.textContent = items.length + ' keywords';
+  // render highlighted text with no selected phrase initially
+  renderHighlightedText(sourceText, []);
+}
+
+/* highlight all occurrences of selected phrases (array) */
+function renderHighlightedText(sourceText, selectedPhrases){
+  if(!sourceText) { highlighted.innerHTML = 'No text to show.'; return; }
+  // We'll do a safe highlight by escaping then replacing using regex on word boundaries.
+  let html = escapeHtml(sourceText);
+
+  // Sort phrases by length desc to avoid nested replacement issues
+  const phrases = Array.from(new Set(selectedPhrases)).sort((a,b)=> b.length - a.length);
+
+  for(const ph of phrases){
+    // escape regex special chars in phrase
+    const esc = ph.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // match with word boundaries; allow punctuation adjacency
+    const re = new RegExp('\\b' + esc.split(' ').map(s=> s.replace(/'/g,"\\'")).join('\\s+') + '\\b', 'gi');
+    // replace with mark
+    html = html.replace(re, match => `<mark class="kwmark">${match}</mark>`);
+  }
+
+  // small safety: limit html length to avoid extremely long DOM injection
+  highlighted.innerHTML = html.length > 200000 ? escapeHtml(sourceText).slice(0,200000) + '...' : html;
+}
+
+/* when user clicks a phrase */
+function onSelectPhrase(phrase){
+  // highlight that phrase in the text
+  renderHighlightedText(sourceEl.value || '', [phrase]);
+  // scroll to keyword in list if present
+  Array.from(keywordList.children).forEach(c => {
+    if(c.innerText.toLowerCase().includes(phrase.toLowerCase())){
+      c.scrollIntoView({behavior:'smooth', block:'nearest'});
+      c.animate([{transform:'translateX(-6px)'},{transform:'translateX(0)'}],{duration:220});
+    }
+  });
+}
+
+/* initial empty */
+renderEmptyResults();
+
+/* keyboard shortcut: Ctrl+Enter to extract */
+sourceEl.addEventListener('keydown', (e)=>{
+  if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
+    extractBtn.click();
+  }
+});
+
+</script>
+</body>
+</html>
